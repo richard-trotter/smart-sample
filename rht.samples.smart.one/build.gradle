@@ -1,0 +1,95 @@
+/*
+ *
+ */
+
+/************************************************************************************
+* Declarations supporting the use of this build script
+************************************************************************************/
+buildscript {
+
+	repositories {
+	    jcenter()
+	}
+	
+	/*
+	 *  https://spring.io/guides/gs/rest-service/
+	 */
+	dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.5.RELEASE")
+	}
+}
+
+/************************************************************************************
+* Declarations supporting the build of this kind of project
+************************************************************************************/
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+repositories {
+    jcenter()
+}
+	
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter-web:2.1.5.RELEASE")
+    compile("org.springframework:spring-web:5.1.9.RELEASE")
+//    compile("com.fasterxml.jackson.core:jackson-databind:2.1.5.RELEASE")
+//	    testCompile('org.springframework.boot:spring-boot-starter-test')
+}
+
+
+/************************************************************************************
+* Application specific declarations
+************************************************************************************/
+def svcName = "smart-one-svc"
+def implVersion = "0.1.0"
+def buildStamp = new java.text.SimpleDateFormat("yyyyMMdd'-'HHmmss").format(new Date())
+
+bootJar {
+
+    baseName = svcName
+    version =  "${implVersion}-${buildStamp}" 
+		
+    manifest {
+        attributes(
+            'Build-Timestamp': buildStamp)
+    }
+}
+
+def outputDir = "build/dist"
+def outputStageDir = "build/staging"
+def tarRootDir = svcName
+def tarStagingDir = "${outputStageDir}/${tarRootDir}"
+
+task updateVersionFile {
+		file("src/main/resources/static/version.txt").write("Version: ${svcName} ${implVersion} ${buildStamp}")
+}
+	
+task prepackage(type:Copy, dependsOn: [':updateVersionFile', ':bootJar']){
+
+	delete(outputStageDir)
+
+	into tarStagingDir
+	
+	from (".") {
+		include("README.md", "Dockerfile", "${svcName}.yml", "update_svc.sh")
+	}
+	from ("./build/libs") {
+		include("${bootJar.baseName}-*.jar")
+	}
+}
+
+task dist(type:Tar, dependsOn: ["prepackage"]) {
+	
+	archiveName = "${svcName}-${implVersion}.tar.gz"
+	destinationDir = file(outputDir)
+
+	compression = Compression.GZIP
+	
+	from outputStageDir
+}
+

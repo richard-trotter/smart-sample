@@ -24,13 +24,12 @@
 	        //      1. permission to launch the app in the specific context
 	        //      2. permission to read all of the patient's record
 	        const authScope = [
-	                "launch",
+	                "launch/patient",
 	                "patient/*.read"
 	            ].join(" ");
 	
 	        // Construct the URL that the authorization server should redirect to after authorization.
-	        const launchUri = window.location.protocol + "//" + window.location.host + window.location.pathname;
-	        const redirectUri = launchUri.replace("launch.html","entry.html");
+	        const redirectUri = "index.html";
 
 			FHIR.oauth2.authorize({
 			    "client_id": clientId,

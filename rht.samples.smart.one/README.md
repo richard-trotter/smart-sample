@@ -1,33 +1,24 @@
-### Build
+## SMART on FHIR Demo
 
-Build the app distribution archive.
+### Introduction
 
-	cd /Users/rtrotter/Documents/GitHub/smart-sample/rht.samples.smart.one  
-	./gradlew clean build dist
+This project represents an exploration and demo of SMART on FHIR. The key feature is that of launching a small 
+demo app from the EPIC SMART on FHIR sandbox, simulating launch from within the EPIC EHR, using OAuth2 authorization. 
 
-### Test in a local Docker container
+	https://open.epic.com/Launchpad/Oauth2Sso
 
-Extract the app archive.
+There are 3 versions of the app. All 3 make a request to the sandbox FHIR server to retrieve a subject Patient resource, and then produce a simple rendering of that Patient. The first sample is the most rudimentary, in that it does not make use of any SMART specific client library. The other two both make use of the SMART on FHIR JavaScript Library, which greatly simplifies the client implementation. 
 
-	rm -rf tmp; mkdir tmp; cd tmp  
-	tar -xzvf ../build/dist/smart-one-svc*z  
-	cd smart-one-svc  
+	http://docs.smarthealthit.org/client-js
 
-Build and run the docker image, directing docker to expose the port identified in the Dockerfile.
+The third version also queries for FHIR MedicationOrder resources, and produces a simple rendering of these. 
 
-	docker build -t smart-one-svc .  
-	docker run smart-one-svc  
-	docker run -P smart-one-svc  
+In order to have an endpoint that is accessible from the EPIC sandbox, the app is deployed to IBM Cloud. The project includes both a Docker file for producing a Docker image, and a Kubernetes Deployment spec for deploying this image to a Kubernetes cluster. 
 
-Get the container ID assigned by Docker and determine the external port number selected by Docker, and verify connection. 
-   
-	docker ps  
-	docker port 22aceebb7f0b  
-	curl http://127.0.0.1:32768/samples/launch.html  
+Example sandbox "launch" URL:
 
-Stop the docker container. 
+	http://173.193.82.54:30081/smart-samples/s3/launch.html
 
-	docker stop 22aceebb7f0b  
 
 ### Test in IBM Cloud Kubernetes cluster
 
@@ -78,11 +69,18 @@ Login to the IBM Cloud container registry.
 	Namespace   
 	ns-rtrotter   
 
-Build the sample app docker image, and push the image to this IBM Cloud container registry, using the registry name and namespace name identified from above.
+Build the app distribution archive.
 
+	cd ${localrepo}/rht.samples.smart.one  
+	./gradlew clean build dist
+
+Build the docker image, and push the image to this IBM Cloud container registry, using the registry name and namespace name identified from above.
+
+	mkdir tmp; cd tmp; tar -zxf ../build/dist/smart*z
+	cd smart-one-svc/
 	docker build -t us.icr.io/ns-rtrotter/smart-one-svc:latest .
 	docker push us.icr.io/ns-rtrotter/smart-one-svc:latest
-
+	
 Verify that the image was pushed successfully by running the following command. Note that IBM Cloud runs a security scan on docker images pushed to the registry, and this may take several minutes. Wait for 'SECURITY STATUS' to no longer show 'Scanning...'.
 
 	$ ibmcloud cr images

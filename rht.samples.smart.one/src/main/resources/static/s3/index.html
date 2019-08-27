@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+     <meta charset="UTF-8">
+     <title>SMART Simple Auth App</title>
+	 <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.js"></script>
+	 <script>
+		function renderPatient(client) {
+			client.request(`Patient/${client.patient.id}`).then(pt => {
+				console.log("got patient: "+pt)
+	            const name = pt.name[0].given.join(" ") +" "+ pt.name[0].family.join(" ");
+	            document.body.innerHTML += "<h3>Patient: " + name + "</h3>";
+			});
+		}
+
+		function getMedicationName(medCodings) {
+		  var coding = medCodings.find(function(c){
+		    return c.system == "http://www.nlm.nih.gov/research/umls/rxnorm";
+		  });
+		  return coding && coding.display || "Unnamed Medication(TM)";
+		}
+	
+		function renderMedications(client) {
+		
+		  // Get MedicationRequest resources for the selected patient
+		  client.request(`/MedicationOrder?patient=${client.patient.id}`)
+		    
+		  .then(function(data) {
+		    if (!data.entry || !data.entry.length) {
+		     // Reject if no MedicationOrders are found
+		      throw new Error("No medications found for the selected patient");
+		    }
+		    // return bundle entries
+		    return data.entry;
+		  })
+		  
+		  // Build and render a list of medication order dates and medication names
+		  .then( entries => {
+			  document.body.innerHTML += "<h4>Medications</h4>";
+			  let listElement = "<table>";
+			  const medlist = entries.map( entry => { 
+				  const orderDate = client.getPath(entry, "resource.dateWritten");
+				  const displayText = client.getPath(entry, "resource.medicationCodeableConcept.text") ||
+				  	client.getPath(entry, "resource.medicationReference.display");
+				  return "<tr><td>" + orderDate + "</td><td>" + displayText + "</td></tr>" 
+				  } );
+		      for ( let row of medlist ) {
+		    	listElement += row;
+		      }
+	    	  listElement += "</table>";
+	    	  document.body.innerHTML += listElement;
+		  })
+		}
+	 </script>
+  </head>
+  <body>
+	<h2>Sample SMART app</h2>  
+    <script>
+		console.log("Loading index.html...")
+
+		FHIR.oauth2.ready()
+			.then(client => { 
+				console.log("authorization complete");
+				client.getFhirVersion().then( ver => { console.log("FHIR Version: "+ver) } );
+				return client; })
+			.then(client => { renderPatient(client); return client; })
+			.then(client => { renderMedications(client); return client; });
+    </script>
+  </body>
+</html>

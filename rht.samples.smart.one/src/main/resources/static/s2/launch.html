@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Simple SMART App - Launch</title>
+		<script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.js"></script>
+		<script src="util/launch.js"></script>
+    </head>
+    <body>      
+    	<h2>Sample SMART launcher</h2>  
+        <script>
+
+        	// In a real app, this would be an external config parameter
+	        const clientId = "6c12dff4-24e7-4475-a742-b08972c4ea27";
+        	
+        	console.log("clientId = "+clientId)
+
+        	params = getAllUrlParams();
+	    	const serviceUri = params["iss"];   // base EHR FHIR server URL
+	        console.log("FHIR service = "+ serviceUri);
+	
+	        // The scopes that the sample app will request from the authorization server
+	        // encoded in a space-separated string:
+	        //      1. permission to launch the app in the specific context
+	        //      2. permission to read all of the patient's record
+	        const authScope = [
+	                "launch",
+	                "patient/*.read"
+	            ].join(" ");
+	
+	        // Construct the URL that the authorization server should redirect to after authorization.
+	        const launchUri = window.location.protocol + "//" + window.location.host + window.location.pathname;
+	        const redirectUri = launchUri.replace("launch.html","entry.html");
+
+			FHIR.oauth2.authorize({
+			    "client_id": clientId,
+			    "scope": authScope,
+			    "iss": serviceUri,
+			    "redirectUri": redirectUri
+			});
+
+
+	</script>
+    </body>
+</html>

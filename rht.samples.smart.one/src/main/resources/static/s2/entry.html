@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+     <meta charset="UTF-8">
+     <title>SMART Simple Auth App</title>
+	 <script src="https://cdn.jsdelivr.net/npm/fhirclient/build/fhir-client.js"></script>
+  </head>
+  <body>
+		<h2>Sample SMART app</h2>  
+    <script>
+		console.log("Loading entry.html...")
+
+		FHIR.oauth2.ready().then(client => {
+			console.log("authorization complete")
+			client.request(`Patient/${client.patient.id}`).then(pt => {
+				console.log("got patient: "+pt)
+	            const name = pt.name[0].given.join(" ") +" "+ pt.name[0].family.join(" ");
+	            document.body.innerHTML += "<h3>Patient: " + name + "</h3>";
+			});
+		});
+    </script>
+  </body>
+</html>

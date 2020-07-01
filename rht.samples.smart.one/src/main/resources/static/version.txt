@@ -1,1 +1,0 @@
-Version: smart-one-svc 0.1.0 20190826-104136
